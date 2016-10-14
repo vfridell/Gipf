@@ -60,6 +60,7 @@ namespace GipfLib.Models
         public IReadOnlyDictionary<Hex, Cell> Cells => new ReadOnlyDictionary<Hex, Cell>(_cellMap);
 
         public IEnumerable<Cell> GetLinesEnumerable() => new BoardLinesEnumerable(this);
+        internal IEnumerable<Cell> GetWallsEnumerable() => new BoardWallsEnumerable(this);
 
         public IReadOnlyCollection<Move> GetMoves()
         {
@@ -203,11 +204,7 @@ namespace GipfLib.Models
             throw new NotImplementedException();
         }
 
-        internal IEnumerable<Cell> GetWallsEnumerable()
-        {
-            return new BoardWallsEnumerable(this);
-        }
-
+ 
         /// <summary>
         /// We create a board by getting a hex of hexes with radius of 4
         /// See http://www.redblobgames.com/grids/hexagons/#range

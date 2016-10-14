@@ -18,9 +18,9 @@
 
         public override int GetHashCode() => (NumPieces + 1) * 17 + (int)Color;
 
-        public static bool operator !=(GipfPiece piece1, GipfPiece piece2) => piece1.Equals(piece2);
+        public static bool operator !=(GipfPiece piece1, GipfPiece piece2) => !piece1.Equals(piece2);
 
-        public static bool operator ==(GipfPiece piece1, GipfPiece piece2) => !piece1.Equals(piece2);
+        public static bool operator ==(GipfPiece piece1, GipfPiece piece2) => piece1.Equals(piece2);
 
     }
 }
