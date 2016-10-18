@@ -6,7 +6,7 @@ namespace GipfLib.Models
 {
     public class FindRunsVisitor : ICellVisitor
     {
-        public IReadOnlyList<IReadOnlyList<Cell>> RunsOf4 => _runs.AsReadOnly().Where(l => l[0].Piece.Color != PieceColor.None && l.Count == 4).ToList();
+        public IReadOnlyList<IReadOnlyList<Cell>> RunsOf4 => _runs.AsReadOnly().Where(l => l[0].Piece.Color != PieceColor.None && l.Count >= 4).ToList();
         public IReadOnlyList<IReadOnlyList<Cell>> ExtendedRunsOf4 => _extendedRunsOfFour.AsReadOnly();
 
         private List<List<Cell>> _runs = new List<List<Cell>>();
@@ -36,7 +36,7 @@ namespace GipfLib.Models
 
         public void PostProcessHandler(object sender, EventArgs e)
         {
-            var RunsOfFour = _runs.Where(l => l[0].Piece.Color != PieceColor.None && l.Count == 4)?.ToList();
+            var RunsOfFour = _runs.Where(l => l[0].Piece.Color != PieceColor.None && l.Count >= 4)?.ToList();
             _extendedRunsOfFour = new List<List<Cell>>();
             int index = 0;
             foreach (var run in RunsOfFour)

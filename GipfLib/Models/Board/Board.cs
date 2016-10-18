@@ -20,7 +20,7 @@ namespace GipfLib.Models
 
         private bool _whiteToPlay = true;
         public bool whiteToPlay => _whiteToPlay;
-        private PieceColor colorToPlay => _whiteToPlay ? PieceColor.White : PieceColor.Black;
+        public PieceColor colorToPlay => _whiteToPlay ? PieceColor.White : PieceColor.Black;
 
         private GameResult _gameResult = GameResult.Incomplete;
         public GameResult gameResult => _gameResult;
@@ -61,6 +61,47 @@ namespace GipfLib.Models
 
         public IEnumerable<Cell> GetLinesEnumerable() => new BoardLinesEnumerable(this);
         internal IEnumerable<Cell> GetWallsEnumerable() => new BoardWallsEnumerable(this);
+
+        private List<List<Hex>> _allPossibleRemoveBeforeLists = new List<List<Hex>>();
+        public IReadOnlyList<IReadOnlyList<Hex>> AllPossibleRemoveBeforeLists
+        { get { if (_runsDirty) FindRuns(); return _allPossibleRemoveBeforeLists.AsReadOnly(); } }
+
+        private void CalculateAllPossibleRemoveBeforeLists()
+        {
+            _allPossibleRemoveBeforeLists.Clear();
+            List<Hex> removeBefore = new List<Hex>();
+            List<Hex> removeBeforeGipf = new List<Hex>();
+
+            foreach (IReadOnlyList<Cell> extRun in _runsVisitor.ExtendedRunsOf4)
+            {
+                if (!(extRun[0].Piece.Color == colorToPlay)) throw new Exception("Prior to moving, there is a run of four that is not of the color whose turn it is");
+                foreach (Cell c in extRun)
+                {
+                    // Gipf piece causes multiplication of moves due to choice
+                    if (c.Piece.NumPieces == 2 && c.Piece.Color == colorToPlay)
+                    {
+                        removeBeforeGipf.Add(c.hex);
+                    }
+                    else
+                    {
+                        removeBefore.Add(c.hex);
+                    }
+                }
+            }
+
+            _allPossibleRemoveBeforeLists.Add(removeBefore);
+            foreach (Hex hex in removeBeforeGipf)
+            {
+                List<List<Hex>> tempListList = new List<List<Hex>>();
+                foreach (List<Hex> removeList in _allPossibleRemoveBeforeLists)
+                {
+                    List<Hex> tempList = new List<Hex>(removeList);
+                    tempList.Add(hex);
+                    tempListList.Add(tempList);
+                }
+                foreach (List<Hex> tempList in tempListList) _allPossibleRemoveBeforeLists.Add(tempList);
+            }
+        }
 
         public IReadOnlyCollection<Move> GetMoves()
         {
@@ -172,6 +213,7 @@ namespace GipfLib.Models
                 _gameResult = GameResult.Incomplete;
                 _whiteToPlay = !_whiteToPlay;
                 _turnNumber++;
+                CalculateAllPossibleRemoveBeforeLists();
             }
         }
 

@@ -125,5 +125,51 @@ namespace GipfLib.Tests
             Assert.AreEqual(2, board.blackGipfPiecesInPlay);
             Assert.AreEqual(2, board.whiteGipfPiecesInPlay);
         }
+
+        [TestMethod]
+        public void RemoveBeforeList()
+        {
+            Board board = Board.GetInitialBoard();
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gb2")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gf2")));     //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gb5")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gf1-f3")));  //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-c3")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f1-f4")));   //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-d4")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-c5")));   //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f1-f5")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f7")));      //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-d5")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-e5")));   //b
+
+            Assert.AreEqual(10, board.reserveBlackPieces);
+            Assert.AreEqual(10, board.reserveWhitePieces);
+            Assert.AreEqual(GameResult.Incomplete, board.gameResult);
+            Assert.AreEqual(2, board.blackGipfPiecesInPlay);
+            Assert.AreEqual(2, board.whiteGipfPiecesInPlay);
+
+            Assert.AreEqual(4, board.AllPossibleRemoveBeforeLists.Count);
+        }
+
+        [TestMethod]
+        public void ExceptionIfNoPostRemove()
+        {
+            Board board = Board.GetInitialBoard();
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gb2")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gf2")));     //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gb5")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gf1-f3")));  //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-c3")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f1-f4")));   //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-d4")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-c5")));   //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f1-f5")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f7")));      //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-d5")));   //w
+            Assert.IsFalse(board.TryMakeMove(Move.GetMove(@"f8-f6")));   //b
+            Assert.IsTrue(board.LastError.Contains("Post-push removal did not clear all extended runs of four of current player's color"));
+        }
+
     }
 }
