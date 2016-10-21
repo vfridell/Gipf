@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GipfLib.Models
 {
@@ -23,6 +25,17 @@ namespace GipfLib.Models
         {
             if (neighborhood[position] == null) return false;
             return neighborhood[position].CanPush(position);
+        }
+
+        public IEnumerable<Position> PushPositions
+        {
+            get
+            {
+                foreach(var kvp in NeighborhoodCells)
+                {
+                    if (!(kvp.Value is Wall)) yield return kvp.Key;
+                }
+            }
         }
     }
 }

@@ -69,10 +69,6 @@ namespace GipfLib.Tests
             Assert.AreEqual(111, linesEnumerable.Count(c => !(c is Wall)));
         }
 
-
-
-
-
         [TestMethod]
         public void ApplyMovesToBoard()
         {
@@ -171,5 +167,42 @@ namespace GipfLib.Tests
             Assert.IsTrue(board.LastError.Contains("Post-push removal did not clear all extended runs of four of current player's color"));
         }
 
+        [TestMethod]
+        public void GetAllStartingTournamentMoves()
+        {
+            Board board = Board.GetInitialBoard(GameType.Tournament);
+            Assert.AreEqual(42, board.GetMoves().Count);
+            Assert.AreEqual(0, board.GetMoves().Where(m => m.isGipf == false).Count());
+        }
+
+        [TestMethod]
+        public void GetAllStartingStandardMoves()
+        {
+            Board board = Board.GetInitialBoard(GameType.Standard);
+            Assert.AreEqual(42, board.GetMoves().Count);
+            Assert.AreEqual(42, board.GetMoves().Where(m => m.isGipf == false).Count());
+        }
+
+        [TestMethod]
+        public void GetMovesWithRemoval()
+        {
+            Board board = Board.GetInitialBoard();
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gb2")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gf2")));     //b
+            Assert.AreEqual(84, board.GetMoves().Count);
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gb5")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gf1-f3")));  //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-c3")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f1-f4")));   //b
+            Assert.AreEqual(0, board.GetMoves().Where(m => m.isGipf == true).Count());
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-d4")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-c5")));   //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f1-f5")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f7")));      //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-d5")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-e5")));   //b
+            IReadOnlyList<Move> moves = board.GetMoves().Where(m => m.removeBefore.Count > 0).ToList();
+            Assert.AreEqual(42 * 4, moves.Count);
+        }
     }
 }

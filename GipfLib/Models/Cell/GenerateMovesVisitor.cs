@@ -24,8 +24,12 @@ namespace GipfLib.Models
         public void VisitWallHandler(object sender, VisitWallEventArgs e)
         {
 
+
             //foreach(KeyValuePair<Position, Cell> kvp in e.wall.NeighborhoodCells.Where(kvp => !(kvp.Value is Wall)))
             //{
+            //    Board boardTemp = e.wall.board.Clone();
+            //    boardTemp.Cells[kvp.Value.hex].CanPush()
+                
             //    _moves.Add(new Move(kvp.Value
             //}
         }

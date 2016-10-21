@@ -5,6 +5,8 @@ using System.Linq;
 
 namespace GipfLib.Models
 {
+    public enum GameType { Standard, Tournament }
+
     public class Board
     {
         static Hex start = new Hex(0, 0);
@@ -28,9 +30,21 @@ namespace GipfLib.Models
         private int _turnNumber = 1;
         public int turnNumber => _turnNumber;
 
+        private List<bool> _canPlayGipf = new List<bool>() { true, true };
+        public bool WhiteCanPlayGipf => _canPlayGipf[(int)PieceColor.White];
+        public bool BlackCanPlayGipf => _canPlayGipf[(int)PieceColor.Black];
+
+        private GameType _gameType;
+        public GameType gameType => _gameType;
+
         // end serialize
 
+        private bool _mustPlayGipf => _gameType == GameType.Tournament && (_turnNumber == 1 || _turnNumber == 2);
+
         private bool _runsDirty = true;
+        private bool _movesDirty = true;
+
+        private List<Move> _moves = new List<Move>();
 
         private GipfPieceCountVisitor _gipfCountVisitor = new GipfPieceCountVisitor();
         public int blackGipfPiecesInPlay 
@@ -62,13 +76,12 @@ namespace GipfLib.Models
         public IEnumerable<Cell> GetLinesEnumerable() => new BoardLinesEnumerable(this);
         internal IEnumerable<Cell> GetWallsEnumerable() => new BoardWallsEnumerable(this);
 
-        private List<List<Hex>> _allPossibleRemoveBeforeLists = new List<List<Hex>>();
-        public IReadOnlyList<IReadOnlyList<Hex>> AllPossibleRemoveBeforeLists
-        { get { if (_runsDirty) FindRuns(); return _allPossibleRemoveBeforeLists.AsReadOnly(); } }
+        private List<List<Hex>> _allPossibleRemoveLists = new List<List<Hex>>() { new List<Hex>() };
+        public IReadOnlyList<IReadOnlyList<Hex>> AllPossibleRemoveBeforeLists => _allPossibleRemoveLists.AsReadOnly();
 
-        private void CalculateAllPossibleRemoveBeforeLists()
+        private void CalculateAllPossibleRemoveLists()
         {
-            _allPossibleRemoveBeforeLists.Clear();
+            _allPossibleRemoveLists.Clear();
             List<Hex> removeBefore = new List<Hex>();
             List<Hex> removeBeforeGipf = new List<Hex>();
 
@@ -89,23 +102,72 @@ namespace GipfLib.Models
                 }
             }
 
-            _allPossibleRemoveBeforeLists.Add(removeBefore);
+            _allPossibleRemoveLists.Add(removeBefore);
             foreach (Hex hex in removeBeforeGipf)
             {
                 List<List<Hex>> tempListList = new List<List<Hex>>();
-                foreach (List<Hex> removeList in _allPossibleRemoveBeforeLists)
+                foreach (List<Hex> removeList in _allPossibleRemoveLists)
                 {
                     List<Hex> tempList = new List<Hex>(removeList);
                     tempList.Add(hex);
                     tempListList.Add(tempList);
                 }
-                foreach (List<Hex> tempList in tempListList) _allPossibleRemoveBeforeLists.Add(tempList);
+                foreach (List<Hex> tempList in tempListList) _allPossibleRemoveLists.Add(tempList);
             }
         }
 
-        public IReadOnlyCollection<Move> GetMoves()
+        // TODO fix generating duplicate moves ("b1-b2" == "a1-b2" when nothing is pushed)
+        public IReadOnlyList<Move> GetMoves()
         {
-            throw new NotImplementedException();
+            if (_movesDirty)
+            {
+                _moves.Clear();
+                foreach (List<Hex> removeBeforeList in _allPossibleRemoveLists)
+                {
+                    Board prePushRemovedBoard = Clone();
+                    prePushRemovedBoard.RemoveOrCapturePieces(removeBeforeList);
+                    foreach (Wall wall in prePushRemovedBoard.GetWallsEnumerable())
+                    {
+                        foreach (Position pos in wall.PushPositions)
+                        {
+                            if (wall.CanPush(pos))
+                            {
+                                if (!_mustPlayGipf)
+                                {
+                                    Board pushBoard = prePushRemovedBoard.Clone();
+                                    Wall pWall = (Wall)pushBoard.Cells[wall.hex];
+
+                                    pWall.Push(pos, new GipfPiece(1, colorToPlay));
+                                    pushBoard.CalculateAllPossibleRemoveLists();
+
+                                    foreach (IReadOnlyList<Hex> removeAfterList in pushBoard.AllPossibleRemoveBeforeLists)
+                                    {
+                                        _moves.Add(new Move(pWall.hex, pWall.NeighborhoodCells[pos].hex, removeBeforeList.ToList(), removeAfterList.ToList(), false));
+                                    }
+                                }
+
+                                if (_canPlayGipf[(int)colorToPlay])
+                                {
+                                    Board pushBoard = prePushRemovedBoard.Clone();
+                                    Wall pWall = (Wall)pushBoard.Cells[wall.hex];
+
+                                    pWall.Push(pos, new GipfPiece(2, colorToPlay));
+                                    pushBoard.CalculateAllPossibleRemoveLists();
+
+                                    foreach (IReadOnlyList<Hex> removeAfterList in pushBoard.AllPossibleRemoveBeforeLists)
+                                    {
+                                        _moves.Add(new Move(pWall.hex, pWall.NeighborhoodCells[pos].hex, removeBeforeList.ToList(), removeAfterList.ToList(), true));
+                                    }
+
+                                }
+                            }
+                        }
+
+                    }
+                }
+                _movesDirty = false;
+            }
+            return _moves.AsReadOnly();
         }
 
         /// <summary>
@@ -117,6 +179,7 @@ namespace GipfLib.Models
             try
             {
                 if (_gameResult != GameResult.Incomplete) throw new Exception("This game is over");
+                if (false == _canPlayGipf[(int)colorToPlay] && move.isGipf) throw new Exception("Cannot play a Gipf piece at this time");
 
                 GipfPiece piece = Pieces.GetPiece(this, move);
                 Position direction = Neighborhood.GetDirection(move.from, move.to);
@@ -150,6 +213,8 @@ namespace GipfLib.Models
 
                 if (ExtendedRunsOfFour.Where(l => l[0].Piece.Color == colorToPlay).Count() != 0) throw new Exception($"Post-push removal did not clear all extended runs of four of current player's color ({colorToPlay})");
 
+                if (!move.isGipf) _canPlayGipf[(int)colorToPlay] = false;
+                _movesDirty = true;
                 IncrementTurn();
                 return true;
             }
@@ -213,7 +278,7 @@ namespace GipfLib.Models
                 _gameResult = GameResult.Incomplete;
                 _whiteToPlay = !_whiteToPlay;
                 _turnNumber++;
-                CalculateAllPossibleRemoveBeforeLists();
+                CalculateAllPossibleRemoveLists();
             }
         }
 
@@ -225,11 +290,19 @@ namespace GipfLib.Models
 
         public Board Clone()
         {
-            Board clonedBoard = Board.GetInitialBoard();
-            foreach (var kvp in _cellMap.Where(kvp => kvp.Value.Piece != Pieces.NoPiece))
+            Board clonedBoard = Board.GetInitialBoard(_gameType);
+            foreach (var kvp in _cellMap)
             {
                 clonedBoard._cellMap[kvp.Key].SetPiece(kvp.Value.Piece);
             }
+            clonedBoard._capturedPieces = new List<int>(_capturedPieces);
+            clonedBoard._reservePieces = new List<int>(_reservePieces);
+            clonedBoard._gameResult = _gameResult;
+            clonedBoard._movesDirty = _movesDirty;
+            clonedBoard._moves = new List<Move>(_moves);
+            clonedBoard._turnNumber = _turnNumber;
+            clonedBoard._whiteToPlay = _whiteToPlay;
+            clonedBoard._canPlayGipf = new List<bool>(_canPlayGipf);
             return clonedBoard;
         }
 
@@ -251,9 +324,10 @@ namespace GipfLib.Models
         /// We create a board by getting a hex of hexes with radius of 4
         /// See http://www.redblobgames.com/grids/hexagons/#range
         /// </summary>
-        public static Board GetInitialBoard()
+        public static Board GetInitialBoard(GameType gameType = GameType.Tournament)
         {
             Board board = new Board();
+            board._gameType = gameType;
             for(int row = -boardRadius; row <= boardRadius; row++)
             {
                 int minCol = Math.Max(-boardRadius, -row - boardRadius );
@@ -275,6 +349,17 @@ namespace GipfLib.Models
                 }
             }
             board.InitCells();
+            if (gameType == GameType.Standard)
+            {
+                board._cellMap[NotationParser.GetHex("e8")].SetPiece(Pieces.BlackGipf);
+                board._cellMap[NotationParser.GetHex("b2")].SetPiece(Pieces.BlackGipf);
+                board._cellMap[NotationParser.GetHex("h2")].SetPiece(Pieces.BlackGipf);
+                board._cellMap[NotationParser.GetHex("e2")].SetPiece(Pieces.WhiteGipf);
+                board._cellMap[NotationParser.GetHex("b5")].SetPiece(Pieces.WhiteGipf);
+                board._cellMap[NotationParser.GetHex("h5")].SetPiece(Pieces.WhiteGipf);
+                board._canPlayGipf[(int)PieceColor.White] = false;
+                board._canPlayGipf[(int)PieceColor.Black] = false;
+            }
             return board;
         }
 
