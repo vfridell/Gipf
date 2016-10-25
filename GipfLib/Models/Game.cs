@@ -8,10 +8,10 @@ namespace GipfLib.Models
     public class Game
     {
         private List<Move> _movesMade = new List<Move>();
-        public IReadOnlyList<Move> movesMade { get { return _movesMade.AsReadOnly(); } }
+        public IReadOnlyList<Move> movesMade => _movesMade.AsReadOnly();
 
         private List<Board> _boards = new List<Board>();
-        public IReadOnlyList<Board> boards { get { return _boards.AsReadOnly(); } }
+        public IReadOnlyList<Board> boards => _boards.AsReadOnly();
 
         private Board _currentBoard;
 

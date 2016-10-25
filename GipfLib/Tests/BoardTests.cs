@@ -145,7 +145,7 @@ namespace GipfLib.Tests
             Assert.AreEqual(2, board.blackGipfPiecesInPlay);
             Assert.AreEqual(2, board.whiteGipfPiecesInPlay);
 
-            Assert.AreEqual(4, board.AllPossibleRemoveBeforeLists.Count);
+            Assert.AreEqual(4, board.AllPossibleRemoveLists.Count);
         }
 
         [TestMethod]
@@ -171,7 +171,8 @@ namespace GipfLib.Tests
         public void GetAllStartingTournamentMoves()
         {
             Board board = Board.GetInitialBoard(GameType.Tournament);
-            Assert.AreEqual(42, board.GetMoves().Count);
+            Assert.AreNotEqual(board.GetMoves()[0], board.GetMoves()[1]);
+            Assert.AreEqual(18, board.GetMoves().Count);
             Assert.AreEqual(0, board.GetMoves().Where(m => m.isGipf == false).Count());
         }
 
@@ -179,17 +180,19 @@ namespace GipfLib.Tests
         public void GetAllStartingStandardMoves()
         {
             Board board = Board.GetInitialBoard(GameType.Standard);
-            Assert.AreEqual(42, board.GetMoves().Count);
-            Assert.AreEqual(42, board.GetMoves().Where(m => m.isGipf == false).Count());
+            Assert.AreNotEqual(board.GetMoves()[0], board.GetMoves()[1]);
+            Assert.AreEqual(30, board.GetMoves().Count);
+            Assert.AreEqual(30, board.GetMoves().Where(m => m.isGipf == false).Count());
         }
 
         [TestMethod]
         public void GetMovesWithRemoval()
         {
-            Board board = Board.GetInitialBoard();
+            Board board = Board.GetInitialBoard(GameType.Tournament);
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gb2")));     //w
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gf2")));     //b
-            Assert.AreEqual(84, board.GetMoves().Count);
+            // 21 possible pushes * 2 (Gipf or non-Gipf both possible)
+            Assert.AreEqual(42, board.GetMoves().Count);
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gb5")));     //w
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gf1-f3")));  //b
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-c3")));   //w
@@ -202,7 +205,8 @@ namespace GipfLib.Tests
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-d5")));   //w
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-e5")));   //b
             IReadOnlyList<Move> moves = board.GetMoves().Where(m => m.removeBefore.Count > 0).ToList();
-            Assert.AreEqual(42 * 4, moves.Count);
+            // 4 possible remove befores * 22 possible pushes
+            Assert.AreEqual(22 * 4, moves.Count);
         }
     }
 }

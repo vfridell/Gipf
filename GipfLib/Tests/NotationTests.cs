@@ -90,14 +90,14 @@ namespace GipfLib.Tests
             Assert.AreEqual(move1.to, new Hex(-2, 1));
             Assert.AreEqual(move1.from, new Hex(3, -4));
             Assert.AreEqual(4, move1.removeAfter.Count);
-            Assert.AreEqual(null, move1.removeBefore);
+            Assert.AreEqual(0, move1.removeBefore.Count);
 
             Assert.IsTrue(NotationParser.TryParseNotation("a5-g3;xb3*,c4*,d5,g6", out move1));
             Assert.IsFalse(move1.isGipf);
             Assert.AreEqual(move1.to, new Hex(2, 0));
             Assert.AreEqual(move1.from, new Hex(-4, 0));
             Assert.AreEqual(4, move1.removeAfter.Count);
-            Assert.AreEqual(null, move1.removeBefore);
+            Assert.AreEqual(0, move1.removeBefore.Count);
         }
 
         [TestMethod]
@@ -109,14 +109,14 @@ namespace GipfLib.Tests
             Assert.AreEqual(move1.to, new Hex(0, -2));
             Assert.AreEqual(move1.from, new Hex(-2, -2));
             Assert.AreEqual(2, move1.removeBefore.Count);
-            Assert.AreEqual(null, move1.removeAfter);
+            Assert.AreEqual(0, move1.removeAfter.Count);
 
             Assert.IsTrue(NotationParser.TryParseNotation("xd7*,e7,f6,h4;a5-f4", out move1));
             Assert.IsFalse(move1.isGipf);
             Assert.AreEqual(move1.to, new Hex(1, 0));
             Assert.AreEqual(move1.from, new Hex(-4, 0));
             Assert.AreEqual(4, move1.removeBefore.Count);
-            Assert.AreEqual(null, move1.removeAfter);
+            Assert.AreEqual(0, move1.removeAfter.Count);
         }
 
         [TestMethod]

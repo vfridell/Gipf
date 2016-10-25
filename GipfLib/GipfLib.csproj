@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AI\IGipfAI.cs" />
+    <Compile Include="AI\RandomAI.cs" />
     <Compile Include="Models\Board\Board.cs" />
     <Compile Include="Models\Board\BoardAnalyzer.cs" />
     <Compile Include="Models\Board\BoardLinesEnumerable.cs" />
@@ -59,6 +61,7 @@
     <Compile Include="Models\Pieces.cs" />
     <Compile Include="Models\Cell\Wall.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tests\MoveTests.cs" />
     <Compile Include="Tests\BoardTests.cs" />
     <Compile Include="Tests\HexTests.cs" />
     <Compile Include="Tests\NotationTests.cs" />

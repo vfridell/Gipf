@@ -44,7 +44,7 @@ namespace GipfLib.Models
         private bool _runsDirty = true;
         private bool _movesDirty = true;
 
-        private List<Move> _moves = new List<Move>();
+        private HashSet<Move> _moves = new HashSet<Move>();
 
         private GipfPieceCountVisitor _gipfCountVisitor = new GipfPieceCountVisitor();
         public int blackGipfPiecesInPlay 
@@ -77,7 +77,7 @@ namespace GipfLib.Models
         internal IEnumerable<Cell> GetWallsEnumerable() => new BoardWallsEnumerable(this);
 
         private List<List<Hex>> _allPossibleRemoveLists = new List<List<Hex>>() { new List<Hex>() };
-        public IReadOnlyList<IReadOnlyList<Hex>> AllPossibleRemoveBeforeLists => _allPossibleRemoveLists.AsReadOnly();
+        public IReadOnlyList<IReadOnlyList<Hex>> AllPossibleRemoveLists => _allPossibleRemoveLists.AsReadOnly();
 
         private void CalculateAllPossibleRemoveLists()
         {
@@ -116,7 +116,6 @@ namespace GipfLib.Models
             }
         }
 
-        // TODO fix generating duplicate moves ("b1-b2" == "a1-b2" when nothing is pushed)
         public IReadOnlyList<Move> GetMoves()
         {
             if (_movesDirty)
@@ -134,31 +133,12 @@ namespace GipfLib.Models
                             {
                                 if (!_mustPlayGipf)
                                 {
-                                    Board pushBoard = prePushRemovedBoard.Clone();
-                                    Wall pWall = (Wall)pushBoard.Cells[wall.hex];
-
-                                    pWall.Push(pos, new GipfPiece(1, colorToPlay));
-                                    pushBoard.CalculateAllPossibleRemoveLists();
-
-                                    foreach (IReadOnlyList<Hex> removeAfterList in pushBoard.AllPossibleRemoveBeforeLists)
-                                    {
-                                        _moves.Add(new Move(pWall.hex, pWall.NeighborhoodCells[pos].hex, removeBeforeList.ToList(), removeAfterList.ToList(), false));
-                                    }
+                                    AddPossibleMoves(removeBeforeList, prePushRemovedBoard, wall.hex, pos, false);
                                 }
 
                                 if (_canPlayGipf[(int)colorToPlay])
                                 {
-                                    Board pushBoard = prePushRemovedBoard.Clone();
-                                    Wall pWall = (Wall)pushBoard.Cells[wall.hex];
-
-                                    pWall.Push(pos, new GipfPiece(2, colorToPlay));
-                                    pushBoard.CalculateAllPossibleRemoveLists();
-
-                                    foreach (IReadOnlyList<Hex> removeAfterList in pushBoard.AllPossibleRemoveBeforeLists)
-                                    {
-                                        _moves.Add(new Move(pWall.hex, pWall.NeighborhoodCells[pos].hex, removeBeforeList.ToList(), removeAfterList.ToList(), true));
-                                    }
-
+                                    AddPossibleMoves(removeBeforeList, prePushRemovedBoard, wall.hex, pos, true);
                                 }
                             }
                         }
@@ -167,7 +147,23 @@ namespace GipfLib.Models
                 }
                 _movesDirty = false;
             }
-            return _moves.AsReadOnly();
+            return _moves.ToList().AsReadOnly();
+        }
+
+        private void AddPossibleMoves(List<Hex> removeBeforeList, Board prePushRemovedBoard, Hex wallHex, Position pos, bool isGipf)
+        {
+            Board pushBoard = prePushRemovedBoard.Clone();
+            Wall pWall = (Wall)pushBoard.Cells[wallHex];
+
+            pWall.Push(pos, new GipfPiece(isGipf ? 2 : 1, colorToPlay));
+            pushBoard.CalculateAllPossibleRemoveLists();
+
+            foreach (IReadOnlyList<Hex> removeAfterList in pushBoard.AllPossibleRemoveLists)
+            {
+                Move move = new Move(pWall.hex, pWall.NeighborhoodCells[pos].hex, removeBeforeList.ToList(), removeAfterList.ToList(), isGipf);
+                move.SimplifyMove(prePushRemovedBoard);
+                _moves.Add(move);
+            }
         }
 
         /// <summary>
@@ -266,6 +262,8 @@ namespace GipfLib.Models
 
         private void IncrementTurn()
         {
+            // TODO fix the case when there are no pieces in reserve at end of turn but 
+            // next turn there is some for removal.
             bool gameOver = (reserveBlackPieces == 0 || reserveWhitePieces == 0
                             || whiteGipfPiecesInPlay == 0 || (blackGipfPiecesInPlay == 0 && _turnNumber > 2));
             if (gameOver)
@@ -299,7 +297,7 @@ namespace GipfLib.Models
             clonedBoard._reservePieces = new List<int>(_reservePieces);
             clonedBoard._gameResult = _gameResult;
             clonedBoard._movesDirty = _movesDirty;
-            clonedBoard._moves = new List<Move>(_moves);
+            clonedBoard._moves = new HashSet<Move>(_moves);
             clonedBoard._turnNumber = _turnNumber;
             clonedBoard._whiteToPlay = _whiteToPlay;
             clonedBoard._canPlayGipf = new List<bool>(_canPlayGipf);
@@ -318,7 +316,6 @@ namespace GipfLib.Models
             //return true;
             throw new NotImplementedException();
         }
-
  
         /// <summary>
         /// We create a board by getting a hex of hexes with radius of 4
