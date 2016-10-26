@@ -91,7 +91,7 @@ namespace GipfLib.Models
                 foreach (Cell c in extRun)
                 {
                     // Gipf piece causes multiplication of moves due to choice
-                    if (c.Piece.NumPieces == 2 && c.Piece.Color == colorToPlay)
+                    if (c.Piece.NumPieces == 2)
                     {
                         removeBeforeGipf.Add(c.hex);
                     }

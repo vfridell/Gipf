@@ -145,7 +145,7 @@ namespace GipfLib.Tests
             Assert.AreEqual(2, board.blackGipfPiecesInPlay);
             Assert.AreEqual(2, board.whiteGipfPiecesInPlay);
 
-            Assert.AreEqual(4, board.AllPossibleRemoveLists.Count);
+            Assert.AreEqual(8, board.AllPossibleRemoveLists.Count);
         }
 
         [TestMethod]
@@ -205,8 +205,8 @@ namespace GipfLib.Tests
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-d5")));   //w
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-e5")));   //b
             IReadOnlyList<Move> moves = board.GetMoves().Where(m => m.removeBefore.Count > 0).ToList();
-            // 4 possible remove befores * 22 possible pushes
-            Assert.AreEqual(22 * 4, moves.Count);
+            // 8 possible remove befores * 22 possible pushes
+            Assert.AreEqual(22 * 8, moves.Count);
         }
     }
 }
