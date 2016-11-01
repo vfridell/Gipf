@@ -46,11 +46,15 @@ namespace GipfLib.Models
 
         private HashSet<Move> _moves = new HashSet<Move>();
 
-        private GipfPieceCountVisitor _gipfCountVisitor = new GipfPieceCountVisitor();
+        private PieceCountVisitor _gipfCountVisitor = new PieceCountVisitor();
         public int blackGipfPiecesInPlay 
         { get { if (_runsDirty) FindRuns(); return _gipfCountVisitor.BlackGipfCount; } }
         public int whiteGipfPiecesInPlay 
         { get { if (_runsDirty) FindRuns(); return _gipfCountVisitor.WhiteGipfCount; } }
+        public int whitePiecesInPlay 
+        { get { if (_runsDirty) FindRuns(); return _gipfCountVisitor.WhiteNonGipfCount; } }
+        public int blackPiecesInPlay 
+        { get { if (_runsDirty) FindRuns(); return _gipfCountVisitor.BlackNonGipfCount; } }
 
         private FindRunsVisitor _runsVisitor = new FindRunsVisitor();
         public IReadOnlyList<IReadOnlyList<Cell>> Runs
@@ -317,6 +321,50 @@ namespace GipfLib.Models
             throw new NotImplementedException();
         }
  
+        public static bool IsCongruent(Board board1, Board board2)
+        {
+            if (!EqualPiecesInPlay(board1, board2)) return false;
+
+            // check reflection congruence
+            for (int i = 1; i <= 6; i++)
+            {
+                bool isCongruent = true;
+                foreach (Cell cell in board1._cellMap.Values)
+                {
+                    if (cell.Piece != board2._cellMap[Neighborhood.MirrorOriginHex(cell.hex, i)].Piece)
+                    {
+                        isCongruent = false;
+                        break;
+                    }
+                }
+                if (isCongruent) return true;
+            }
+
+            // check rotational congruence
+            for (int i = 1; i < 6; i++)
+            {
+                bool isCongruent = true;
+                foreach(Cell cell in board1._cellMap.Values)
+                {
+                    if(cell.Piece != board2._cellMap[Neighborhood.Rotate60DegreesClockwiseHex(cell.hex, i)].Piece)
+                    {
+                        isCongruent = false;
+                        break;
+                    }
+                }
+                if (isCongruent) return true;
+            }
+            return false;
+        }
+
+        public static bool EqualPiecesInPlay(Board board1, Board board2)
+        {
+            return board1.blackGipfPiecesInPlay == board2.blackGipfPiecesInPlay &&
+                    board1.whiteGipfPiecesInPlay == board2.whiteGipfPiecesInPlay &&
+                    board1.blackPiecesInPlay == board2.blackPiecesInPlay &&
+                    board1.whitePiecesInPlay == board2.whitePiecesInPlay;
+        }
+
         /// <summary>
         /// We create a board by getting a hex of hexes with radius of 4
         /// See http://www.redblobgames.com/grids/hexagons/#range

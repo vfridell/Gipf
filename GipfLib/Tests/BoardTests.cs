@@ -208,5 +208,52 @@ namespace GipfLib.Tests
             // 8 possible remove befores * 22 possible pushes
             Assert.AreEqual(22 * 8, moves.Count);
         }
+
+        [TestMethod]
+        public void Congruence()
+        {
+            Board board1 = Board.GetInitialBoard(GameType.Tournament);
+            Assert.IsTrue(board1.TryMakeMove(Move.GetMove(@"Gb2")));     //w
+            Board board2 = Board.GetInitialBoard(GameType.Tournament);
+            Assert.IsTrue(board2.TryMakeMove(Move.GetMove(@"Ge8")));     //w
+            Board board3 = Board.GetInitialBoard(GameType.Tournament);
+            Assert.IsTrue(board3.TryMakeMove(Move.GetMove(@"Gc2")));     //w
+            Board board4 = Board.GetInitialBoard(GameType.Tournament);
+            Assert.IsTrue(board4.TryMakeMove(Move.GetMove(@"Gd2")));     //w
+
+            Assert.IsTrue(Board.IsCongruent(board1, board2));
+            Assert.IsFalse(Board.IsCongruent(board1, board3));
+            Assert.IsTrue(Board.IsCongruent(board3, board4));
+        }
+
+        [TestMethod]
+        public void BoardMoveCongruence()
+        {
+            Board board1 = Board.GetInitialBoard(GameType.Tournament);
+            var moves = board1.GetMoves();
+            List<Board> boards = new List<Board>();
+            List<Move> nonCongruentMoves = new List<Move>();
+            foreach(Move move in moves)
+            {
+                Board newBoard = board1.Clone();
+                newBoard.TryMakeMove(move);
+                bool isCogruent = false;
+                foreach (Board oldBoard in boards)
+                {
+                    if(Board.IsCongruent(newBoard, oldBoard))
+                    {
+                        isCogruent = true;
+                        break;
+                    }
+                }
+                if (!isCogruent)
+                {
+                    boards.Add(newBoard);
+                    nonCongruentMoves.Add(move);
+                }
+            }
+
+            Assert.AreEqual(2, boards.Count);
+        }
     }
 }

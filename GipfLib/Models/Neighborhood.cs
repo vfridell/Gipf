@@ -83,5 +83,36 @@ namespace GipfLib.Models
             Hex vector = neighborDirections[(int)position];
             return new Hex(-vector.y, -vector.z, -vector.x);
         }
+
+        public static Hex MirrorOriginHex(Hex hex, int mirrorLine)
+        {
+            switch(mirrorLine)
+            {
+                case 1:
+                    return new Hex(-hex.x, -hex.z, -hex.y);
+                case 2:
+                    return new Hex(hex.y, hex.x, hex.z);
+                case 3:
+                    return new Hex(-hex.z, -hex.y, -hex.x);
+                case 4:
+                    return new Hex(hex.x, hex.z, hex.y);
+                case 5:
+                    return new Hex(-hex.y, -hex.x, -hex.z);
+                case 6:
+                    return new Hex(hex.z, hex.y, hex.x);
+                default:
+                    throw new Exception($"Bad mirror line: {mirrorLine}");
+            }
+        }
+
+        public static Hex Rotate60DegreesClockwiseHex(Hex hex) => new Hex(-hex.z, -hex.x, -hex.y);
+        public static Hex Rotate60DegreesClockwiseHex(Hex hex, int times)
+        {
+            Hex returnHex = hex;
+            for(int i=0; i<times; i++) returnHex = new Hex(-returnHex.z, -returnHex.x, -returnHex.y);
+            return returnHex;
+        }
+        public static Hex Rotate60DegreesCounterClockwiseHex(Hex hex) => new Hex(-hex.y, -hex.z, -hex.x);
+        
     }
 }
