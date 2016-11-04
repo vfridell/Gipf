@@ -12,15 +12,32 @@ namespace GipfLib.Models
         bool _isGipf;
         Hex _from;
         Hex _to;
-        List<Hex> _removeBefore;
-        List<Hex> _removeAfter;
+
+        List<RemoveMovePart> _removeBeforeParts;
+        List<RemoveMovePart> _removeAfterParts;
 
         public bool isGipf => _isGipf;
         public bool isPlacement => _from == Hex.InvalidHex;
         public Hex from => _from;
         public Hex to => _to;
-        public IReadOnlyList<Hex> removeBefore => _removeBefore?.AsReadOnly();
-        public IReadOnlyList<Hex> removeAfter => _removeAfter?.AsReadOnly();
+        public IReadOnlyList<Hex> removeBefore
+        {
+            get
+            {
+                List<Hex> removeList = new List<Hex>();
+                _removeBeforeParts.ForEach(r => removeList.AddRange(r.hexesToRemove));
+                return removeList.AsReadOnly();
+            }
+        }
+        public IReadOnlyList<Hex> removeAfter 
+        {
+            get
+            {
+                List<Hex> removeList = new List<Hex>();
+                _removeAfterParts.ForEach(r => removeList.AddRange(r.hexesToRemove));
+                return removeList.AsReadOnly();
+            }
+        }
 
         public static Move GetMove(string notation)
         {
@@ -54,15 +71,15 @@ namespace GipfLib.Models
             }
         }
 
-        public Move(Hex from, Hex to, List<Hex> removeBefore, List<Hex> removeAfter, bool isGipf)
+        public Move(Hex from, Hex to, List<RemoveMovePart> removeBefore, List<RemoveMovePart> removeAfter, bool isGipf)
         {
             _isGipf = isGipf;
             _from = from;
             _to = to;
-            _removeBefore = removeBefore;
-            _removeAfter = removeAfter;
-            if (null == _removeBefore) _removeBefore = new List<Hex>();
-            if (null == _removeAfter) _removeAfter = new List<Hex>();
+            _removeBeforeParts = removeBefore;
+            _removeAfterParts = removeAfter;
+            if (null == _removeBeforeParts) _removeBeforeParts = new List<RemoveMovePart>();
+            if (null == _removeAfterParts) _removeAfterParts = new List<RemoveMovePart>();
         }
 
         public Move(Hex to, bool isGipf) : this(Hex.InvalidHex, to, null, null, isGipf) { }
@@ -77,59 +94,24 @@ namespace GipfLib.Models
 
         public bool Equals(Move other)
         {
-            if(_from == other._from 
-                && _to == other._to 
-                && _isGipf == other._isGipf)
-            {
-                if (!ScrambledEquals(_removeBefore, other._removeBefore)) return false;
-                else if (!ScrambledEquals(_removeAfter, other._removeAfter)) return false;
-                else return true;
-            }
-            else
-            {
-                return false;
-            }
+            bool eq = _from == other._from
+                    && _to == other._to
+                    && _isGipf == other._isGipf;
+            if (!eq) return false;
+
+            if (false == Helpers.ScrambledEquals(_removeBeforeParts, other._removeBeforeParts)) return false;
+            if (false == Helpers.ScrambledEquals(_removeAfterParts, other._removeAfterParts)) return false;
+            return true;
         }
 
         public override int GetHashCode()
         {
-            int hashCode = _from.GetHashCode() * 7 + _to.GetHashCode() * 23 + _isGipf.GetHashCode();
-            foreach (Hex hex in _removeBefore) hashCode += hex.GetHashCode();
-            foreach (Hex hex in _removeAfter) hashCode += hex.GetHashCode();
-            return hashCode;
+            return _from.GetHashCode() * 7 + _to.GetHashCode() * 23 + _isGipf.GetHashCode() 
+                + _removeAfterParts.GetHashCode() + _removeBeforeParts.GetHashCode();
         }
 
         public static bool operator !=(Move move1, Move move2) => !move1.Equals(move2);
 
         public static bool operator ==(Move move1, Move move2) => move1.Equals(move2);
-
-        // http://stackoverflow.com/questions/3669970/compare-two-listt-objects-for-equality-ignoring-order
-        public static bool ScrambledEquals<T>(IEnumerable<T> list1, IEnumerable<T> list2)
-        {
-            var cnt = new Dictionary<T, int>();
-            foreach (T s in list1)
-            {
-                if (cnt.ContainsKey(s))
-                {
-                    cnt[s]++;
-                }
-                else
-                {
-                    cnt.Add(s, 1);
-                }
-            }
-            foreach (T s in list2)
-            {
-                if (cnt.ContainsKey(s))
-                {
-                    cnt[s]--;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            return cnt.Values.All(c => c == 0);
-        }
     }
 }

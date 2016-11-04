@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="AI\IGipfAI.cs" />
     <Compile Include="AI\RandomAI.cs" />
+    <Compile Include="Helpers\Helpers.cs" />
     <Compile Include="Models\Board\Board.cs" />
     <Compile Include="Models\Board\BoardAnalyzer.cs" />
     <Compile Include="Models\Board\BoardLinesEnumerable.cs" />
@@ -56,6 +57,7 @@
     <Compile Include="Models\Cell\GipfPieceCountVisitor.cs" />
     <Compile Include="Models\Hex.cs" />
     <Compile Include="Models\Move.cs" />
+    <Compile Include="Models\RemoveMovePart.cs" />
     <Compile Include="Models\Neighborhood.cs" />
     <Compile Include="Models\NotationParser.cs" />
     <Compile Include="Models\Pieces.cs" />
@@ -67,7 +69,6 @@
     <Compile Include="Tests\NotationTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Helpers\" />
     <Folder Include="Services\" />
   </ItemGroup>
   <ItemGroup>

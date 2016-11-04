@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -11,6 +12,8 @@ namespace GipfLib.Models
 
         public static Hex GetHex(string gipfCoordinate)
         {
+            if (string.IsNullOrEmpty(gipfCoordinate)) return Hex.InvalidHex;
+
             int startIndex = 0;
             if (gipfCoordinate[0] == 'G') startIndex = 1;
 
@@ -37,21 +40,30 @@ namespace GipfLib.Models
         {
             try
             {
+                List<RemoveMovePart> removeBefores = new List<RemoveMovePart>();
+                List<RemoveMovePart> removeAfters = new List<RemoveMovePart>();
                 string[] notationParts = notation.Split(';');
-                switch (notationParts.Length)
+                bool pushSeen = false;
+                Hex fromCoord = Hex.InvalidHex;
+                Hex toCoord = Hex.InvalidHex;
+                bool isGipf = false;
+                foreach(string notationPart in notationParts)
                 {
-                    case 1:
-                        move = ParsePushOnlyMove(notation);
-                        break;
-                    case 2:
-                        move = ParsePushCaptureMove(notationParts);
-                        break;
-                    case 3:
-                        move = ParseCapturePushCaptureMove(notationParts);
-                        break;
-                    default:
-                        throw new Exception("Bad Notation: Too many semicolons");
+                    RemoveMovePart movePart;
+                    if(TryMakeRemoveList(notationPart, out movePart))
+                    {
+                        if (pushSeen) removeAfters.Add(movePart);
+                        else removeBefores.Add(movePart);
+                    }
+                    else
+                    {
+                        if (pushSeen) throw new Exception("Multiple pushes in notation");
+                        ParsePush(notationPart, out fromCoord, out toCoord, out isGipf);
+                        pushSeen = true;
+                    }
                 }
+                if (!pushSeen) throw new Exception("No push in notation");
+                move = new Move(fromCoord, toCoord, removeBefores, removeAfters, isGipf);
                 return true;
             }
             catch(Exception)
@@ -61,96 +73,33 @@ namespace GipfLib.Models
             }
         }
 
+        internal static bool TryMakeRemoveList(string notation, out RemoveMovePart movePart)
+        {
+            MatchCollection captureMatches;
+            captureMatches = _captureFullRegex.Matches(notation);
+            if (captureMatches.Count == 0)
+            {
+                movePart = null;
+                return false;
+            }
 
-        private static Move ParsePushOnlyMove(string notation)
+            List<Hex> captureList = captureMatches[0].Groups[1].Value.Replace("*", "").Split(',').Select(s => GetHex(s)).ToList();
+            movePart = new RemoveMovePart(captureList);
+            return true;
+        }
+
+        private static void ParsePush(string notation, out Hex fromCoord, out Hex toCoord, out bool isGipf)
         {
             if (!_pushRegex.IsMatch(notation)) throw new Exception("Bad Notation: invalid push notation");
             MatchCollection matches = _pushRegex.Matches(notation);
-            string fromCoord = matches[0].Groups[1].Value;
-            string toCoord = matches[0].Groups[3].Value;
+            isGipf = matches[0].Groups[1].Value[0] == 'G';
+            fromCoord = GetHex(matches[0].Groups[1].Value);
+            toCoord = GetHex(matches[0].Groups[3].Value);
 
-            if(string.IsNullOrEmpty(toCoord))
+            if (toCoord == Hex.InvalidHex)
             {
-                return new Move(GetHex(fromCoord), fromCoord[0] == 'G');
-            }
-            else
-            {
-                return new Move(GetHex(fromCoord), GetHex(toCoord), fromCoord[0] == 'G');
-            }
-        }
-
-        private static Move ParsePushCaptureMove(string [] notationParts)
-        {
-            bool captureFirst;
-            MatchCollection pushMatches;
-            MatchCollection captureMatches;
-            if (_pushRegex.IsMatch(notationParts[0]))
-            {
-                pushMatches = _pushRegex.Matches(notationParts[0]);
-                captureMatches = _captureFullRegex.Matches(notationParts[1]);
-                captureFirst = false;
-            }
-            else
-            {
-                captureMatches = _captureFullRegex.Matches(notationParts[0]);
-                pushMatches = _pushRegex.Matches(notationParts[1]);
-                captureFirst = true;
-            }
-            if (pushMatches.Count == 0) throw new Exception($"Bad push notation: {notationParts[0]}{notationParts[1]}");
-            if (captureMatches.Count == 0) throw new Exception($"Bad capture notation: {notationParts[0]}{notationParts[1]}");
-
-            string fromCoord = pushMatches[0].Groups[1].Value;
-            string toCoord = pushMatches[0].Groups[3].Value;
-            string[] captureList = captureMatches[0].Groups[1].Value.Replace("*", "").Split(',');
-
-            if (string.IsNullOrEmpty(toCoord))
-            {
-                if(captureFirst)
-                {
-                    return new Move(Hex.InvalidHex, GetHex(fromCoord), captureList.Select(s => GetHex(s)).ToList(), null, fromCoord[0] == 'G');
-                }
-                else
-                {
-                    return new Move(Hex.InvalidHex, GetHex(fromCoord), null, captureList.Select(s => GetHex(s)).ToList(), fromCoord[0] == 'G');
-                }
-            }
-            else
-            {
-                if (captureFirst)
-                {
-                    return new Move(GetHex(fromCoord), GetHex(toCoord), captureList.Select(s => GetHex(s)).ToList(), null, fromCoord[0] == 'G');
-                }
-                else
-                {
-                    return new Move(GetHex(fromCoord), GetHex(toCoord), null, captureList.Select(s => GetHex(s)).ToList(), fromCoord[0] == 'G');
-                }
-            }
-        }
-
-        private static Move ParseCapturePushCaptureMove(string [] notationParts)
-        {
-            MatchCollection pushMatches;
-            MatchCollection captureMatchesBefore;
-            MatchCollection captureMatchesAfter;
-            captureMatchesBefore = _captureFullRegex.Matches(notationParts[0]);
-            pushMatches = _pushRegex.Matches(notationParts[1]);
-            captureMatchesAfter = _captureFullRegex.Matches(notationParts[2]);
-            if (pushMatches.Count == 0) throw new Exception($"Bad push notation: {notationParts[0]}{notationParts[1]}{notationParts[2]}");
-            if (captureMatchesAfter.Count == 0) throw new Exception($"Bad capture after notation: {notationParts[0]}{notationParts[1]}{notationParts[2]}");
-            if (captureMatchesBefore.Count == 0) throw new Exception($"Bad capture before notation: {notationParts[0]}{notationParts[1]}{notationParts[2]}");
-
-            string fromCoord = pushMatches[0].Groups[1].Value;
-            string toCoord = pushMatches[0].Groups[3].Value;
-            string[] captureListBefore = captureMatchesBefore[0].Groups[1].Value.Replace("*", "").Split(',');
-            string[] captureListAfter = captureMatchesAfter[0].Groups[1].Value.Replace("*", "").Split(',');
-
-            if (string.IsNullOrEmpty(toCoord))
-            {
-                return new Move(Hex.InvalidHex, GetHex(fromCoord), captureListBefore.Select(s => GetHex(s)).ToList(), captureListAfter.Select(s => GetHex(s)).ToList(), fromCoord[0] == 'G');
-            }
-            else
-            {
-                return new Move(GetHex(fromCoord), GetHex(toCoord), captureListBefore.Select(s => GetHex(s)).ToList(), captureListAfter.Select(s => GetHex(s)).ToList(), fromCoord[0] == 'G');
+                toCoord = fromCoord;
+                fromCoord = Hex.InvalidHex;
             }
         }
 

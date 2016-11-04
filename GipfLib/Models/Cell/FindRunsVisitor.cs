@@ -6,11 +6,14 @@ namespace GipfLib.Models
 {
     public class FindRunsVisitor : ICellVisitor
     {
-        public IReadOnlyList<IReadOnlyList<Cell>> RunsOf4 => _runs.AsReadOnly().Where(l => l[0].Piece.Color != PieceColor.None && l.Count >= 4).ToList();
-        public IReadOnlyList<IReadOnlyList<Cell>> ExtendedRunsOf4 => _extendedRunsOfFour.AsReadOnly();
+        public IReadOnlyList<IReadOnlyList<Cell>> RunsOfFourOrMore => _runs.AsReadOnly().Where(l => l[0].Piece.Color != PieceColor.None && l.Count >= 4).ToList();
+        public IReadOnlyList<IReadOnlyList<Cell>> ExtendedRuns => _extendedRunsOfFour.AsReadOnly();
 
         private List<List<Cell>> _runs = new List<List<Cell>>();
         private List<List<Cell>> _extendedRunsOfFour = new List<List<Cell>>();
+        private List<Cell> _intersections = new List<Cell>();
+
+        public IReadOnlyList<Cell> Intersections => _intersections.AsReadOnly();
         public IReadOnlyList<IReadOnlyList<Cell>> Runs => _runs.AsReadOnly();
         private GipfPiece _lastPiece = new GipfPiece(-1, PieceColor.None);
         private int _index = -1;
@@ -36,13 +39,13 @@ namespace GipfLib.Models
 
         public void PostProcessHandler(object sender, EventArgs e)
         {
-            var RunsOfFour = _runs.Where(l => l[0].Piece.Color != PieceColor.None && l.Count >= 4)?.ToList();
             _extendedRunsOfFour = new List<List<Cell>>();
             int index = 0;
-            foreach (var run in RunsOfFour)
+            foreach (List<Cell> run in RunsOfFourOrMore)
             {
-                Cell end1 = run[0];
-                Cell end2 = run[3];
+ 
+                Cell end1 = run.First();
+                Cell end2 = run.Last();
                 Position direction2 = Neighborhood.GetDirection(end1.hex, end2.hex);
                 Position direction1 = Neighborhood.GetDirection(end2.hex, end1.hex);
                 Cell currentCell = end1.NeighborhoodCells[direction1];
@@ -62,6 +65,17 @@ namespace GipfLib.Models
 
                 index++;
             }
+
+            // track intersectons
+            HashSet<Hex> hexesInRuns = new HashSet<Hex>();
+            _extendedRunsOfFour.All(l => l.All((c) =>
+                  {
+                      if (hexesInRuns.Contains(c.hex)) _intersections.Add(c);
+                      else hexesInRuns.Add(c.hex);
+                      return true;
+                  }
+            ));
+
         }
 
         public void PreProcessHandler(object sender, EventArgs e)

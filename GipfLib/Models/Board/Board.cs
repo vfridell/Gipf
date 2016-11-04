@@ -61,10 +61,10 @@ namespace GipfLib.Models
         { get { if (_runsDirty) FindRuns(); return _runsVisitor.Runs; } }
 
         public IReadOnlyList<IReadOnlyList<Cell>> RunsOfFour 
-        { get { if (_runsDirty) FindRuns(); return _runsVisitor.RunsOf4; } }
+        { get { if (_runsDirty) FindRuns(); return _runsVisitor.RunsOfFourOrMore; } }
 
         public IReadOnlyList<IReadOnlyList<Cell>> ExtendedRunsOfFour 
-        { get { if (_runsDirty) FindRuns(); return _runsVisitor.ExtendedRunsOf4; } }
+        { get { if (_runsDirty) FindRuns(); return _runsVisitor.ExtendedRuns; } }
 
         public string LastError => _lastError;
         private string _lastError;
@@ -89,8 +89,9 @@ namespace GipfLib.Models
             List<Hex> removeBefore = new List<Hex>();
             List<Hex> removeBeforeGipf = new List<Hex>();
 
-            foreach (IReadOnlyList<Cell> extRun in _runsVisitor.ExtendedRunsOf4)
+            foreach (IReadOnlyList<Cell> extRun in _runsVisitor.ExtendedRuns)
             {
+                // FIXME does this check apply to all cases where we run this function?
                 if (!(extRun[0].Piece.Color == colorToPlay)) throw new Exception("Prior to moving, there is a run of four that is not of the color whose turn it is");
                 foreach (Cell c in extRun)
                 {
@@ -155,11 +156,15 @@ namespace GipfLib.Models
         }
 
         private void AddPossibleMoves(List<Hex> removeBeforeList, Board prePushRemovedBoard, Hex wallHex, Position pos, bool isGipf)
+        { throw new NotImplementedException(); }
+/*
+ *        private void AddPossibleMoves(List<Hex> removeBeforeList, Board prePushRemovedBoard, Hex wallHex, Position pos, bool isGipf)
         {
             Board pushBoard = prePushRemovedBoard.Clone();
             Wall pWall = (Wall)pushBoard.Cells[wallHex];
 
             pWall.Push(pos, new GipfPiece(isGipf ? 2 : 1, colorToPlay));
+            pushBoard.FindRuns();
             pushBoard.CalculateAllPossibleRemoveLists();
 
             foreach (IReadOnlyList<Hex> removeAfterList in pushBoard.AllPossibleRemoveLists)
@@ -169,7 +174,7 @@ namespace GipfLib.Models
                 _moves.Add(move);
             }
         }
-
+        */
         /// <summary>
         /// Make a move.  Validates the move or fails.
         /// </summary>

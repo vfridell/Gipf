@@ -40,9 +40,11 @@ namespace GipfLib.Tests
             analyzer.AddVisitor(visitor);
             analyzer.AnalyzeBoard();
 
-            Assert.AreEqual(2, visitor.RunsOf4.Count);
-            Assert.AreEqual(PieceColor.Black, visitor.RunsOf4[0][0].Piece.Color);
-            Assert.AreEqual(PieceColor.White, visitor.RunsOf4[1][0].Piece.Color);
+            Assert.AreEqual(2, visitor.RunsOfFourOrMore.Count);
+            Assert.AreEqual(PieceColor.Black, visitor.RunsOfFourOrMore[0][0].Piece.Color);
+            Assert.AreEqual(PieceColor.White, visitor.RunsOfFourOrMore[1][0].Piece.Color);
+            Assert.AreEqual(1, visitor.Intersections.Count);
+            Assert.AreEqual(new Hex(2, -2), visitor.Intersections[0].hex);
         }
 
         [TestMethod]
@@ -207,6 +209,32 @@ namespace GipfLib.Tests
             IReadOnlyList<Move> moves = board.GetMoves().Where(m => m.removeBefore.Count > 0).ToList();
             // 8 possible remove befores * 22 possible pushes
             Assert.AreEqual(22 * 8, moves.Count);
+        }
+
+        [TestMethod]
+        public void RemovalOfIntersectingRuns()
+        {
+            Board board = Board.GetInitialBoard(GameType.Tournament);
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gb2")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Ge8")));     //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"e2")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f8-e8")));  //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"h2")));   //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f8-e8")));  //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-b2")));  //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f8-e8;xc6,d7,e8")));  //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-b2")));  //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"e8")));  //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"e1-e2")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f8-e8")));  //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"e1-e2")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f8-e8;xc6,d7,e8")));  //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"i1-h2")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f8-e8")));  //b
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"i1-h2")));     //w
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f8-e8")));  //b
+            var interestingMoves = board.GetMoves().Where(m => m.to.column == -3 && m.to.row == 3 && m.from.column == -4 && m.from.row == 4);
+            Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-b2;xh2,g3,f4")));  //w
         }
 
         [TestMethod]
