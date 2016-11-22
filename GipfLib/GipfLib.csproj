@@ -49,6 +49,7 @@
     <Compile Include="Models\Board\BoardLinesEnumerable.cs" />
     <Compile Include="Models\Board\BoardWallsEnumerable.cs" />
     <Compile Include="Models\Cell\Cell.cs" />
+    <Compile Include="Models\Cell\CellRun.cs" />
     <Compile Include="Models\Cell\GenerateMovesVisitor.cs" />
     <Compile Include="Models\Cell\ICellVisitor.cs" />
     <Compile Include="Models\Cell\FindRunsVisitor.cs" />

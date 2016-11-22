@@ -15,6 +15,6 @@
         public static GipfPiece Black { get { return _black; } }
 
         public static GipfPiece GetPiece(Board board, Move move) =>
-            board.whiteToPlay ? (move.isGipf ? WhiteGipf : White) : (move.isGipf ? BlackGipf : Black);
+            board.WhiteToPlay ? (move.isGipf ? WhiteGipf : White) : (move.isGipf ? BlackGipf : Black);
     }
 }

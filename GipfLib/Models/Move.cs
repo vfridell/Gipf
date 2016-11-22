@@ -25,7 +25,7 @@ namespace GipfLib.Models
             get
             {
                 List<Hex> removeList = new List<Hex>();
-                _removeBeforeParts.ForEach(r => removeList.AddRange(r.hexesToRemove));
+                _removeBeforeParts.ForEach(r => removeList.AddRange(r.HexesToRemove));
                 return removeList.AsReadOnly();
             }
         }
@@ -34,7 +34,7 @@ namespace GipfLib.Models
             get
             {
                 List<Hex> removeList = new List<Hex>();
-                _removeAfterParts.ForEach(r => removeList.AddRange(r.hexesToRemove));
+                _removeAfterParts.ForEach(r => removeList.AddRange(r.HexesToRemove));
                 return removeList.AsReadOnly();
             }
         }

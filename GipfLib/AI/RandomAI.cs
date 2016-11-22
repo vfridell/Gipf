@@ -16,7 +16,7 @@ namespace GipfLib.AI
         {
             Board board = game.GetCurrentBoard();
             Move move;
-            if ((_playingWhite && board.whiteToPlay) || (!_playingWhite && !board.whiteToPlay))
+            if ((_playingWhite && board.WhiteToPlay) || (!_playingWhite && !board.WhiteToPlay))
             {
                 move = PickBestMove(board);
                 game.TryMakeMove(move);

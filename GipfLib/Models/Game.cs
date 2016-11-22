@@ -18,10 +18,10 @@ namespace GipfLib.Models
         public readonly string whitePlayerName;
         public readonly string blackPlayerName;
 
-        public bool whiteToPlay { get { return _currentBoard.whiteToPlay; } }
-        public GameResult gameResult { get { return _currentBoard.gameResult; } }
+        public bool whiteToPlay { get { return _currentBoard.WhiteToPlay; } }
+        public GameResult gameResult { get { return _currentBoard.GameResult; } }
         //public string lastError { get { return _currentBoard.lastError; } }
-        public int turnNumber { get { return _currentBoard.turnNumber; } }
+        public int turnNumber { get { return _currentBoard.TurnNumber; } }
         //public int currentBoardIndex { get { return _currentBoard.turnNumber - 2; } }
 
         private Game(string whitePlayerName, string blackPlayerName)

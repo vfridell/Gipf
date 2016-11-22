@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GipfLib.Models
 {
@@ -13,13 +10,13 @@ namespace GipfLib.Models
             _hexesToRemove = new List<Hex>();
         }
 
-        public RemoveMovePart(List<Hex> removeList)
+        public RemoveMovePart(IEnumerable<Hex> removeList)
         {
-            _hexesToRemove = removeList;
+            _hexesToRemove = removeList.ToList();
         }
 
-        private List<Hex> _hexesToRemove;
-        public IReadOnlyList<Hex> hexesToRemove => _hexesToRemove;
+        private readonly List<Hex> _hexesToRemove;
+        public IReadOnlyList<Hex> HexesToRemove => _hexesToRemove;
 
         public override bool Equals(object obj)
         {
@@ -32,17 +29,9 @@ namespace GipfLib.Models
             return Helpers.ScrambledEquals(_hexesToRemove, other._hexesToRemove);
         }
 
-        public override int GetHashCode()
-        {
-            int hashCode = 0;
-            foreach (Hex hex in _hexesToRemove) hashCode += hex.GetHashCode();
-            return hashCode;
-        }
+        public override int GetHashCode() => _hexesToRemove.Sum(hex => hex.GetHashCode());
 
         public static bool operator !=(RemoveMovePart remove1, RemoveMovePart remove2) => !remove1.Equals(remove2);
         public static bool operator ==(RemoveMovePart remove1, RemoveMovePart remove2) => remove1.Equals(remove2);
-
-
-
     }
 }

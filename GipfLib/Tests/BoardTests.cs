@@ -41,8 +41,8 @@ namespace GipfLib.Tests
             analyzer.AnalyzeBoard();
 
             Assert.AreEqual(2, visitor.RunsOfFourOrMore.Count);
-            Assert.AreEqual(PieceColor.Black, visitor.RunsOfFourOrMore[0][0].Piece.Color);
-            Assert.AreEqual(PieceColor.White, visitor.RunsOfFourOrMore[1][0].Piece.Color);
+            Assert.AreEqual(PieceColor.Black, visitor.RunsOfFourOrMore[0].Color);
+            Assert.AreEqual(PieceColor.White, visitor.RunsOfFourOrMore[1].Color);
             Assert.AreEqual(1, visitor.Intersections.Count);
             Assert.AreEqual(new Hex(2, -2), visitor.Intersections[0].hex);
         }
@@ -117,11 +117,11 @@ namespace GipfLib.Tests
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"c6")));
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"c7-c4")));
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"g6")));
-            Assert.AreEqual(0, board.reserveBlackPieces);
-            Assert.AreEqual(5, board.reserveWhitePieces);
-            Assert.AreEqual(GameResult.WhiteWin, board.gameResult);
-            Assert.AreEqual(2, board.blackGipfPiecesInPlay);
-            Assert.AreEqual(2, board.whiteGipfPiecesInPlay);
+            Assert.AreEqual(0, board.ReserveBlackPieces);
+            Assert.AreEqual(5, board.ReserveWhitePieces);
+            Assert.AreEqual(GameResult.WhiteWin, board.GameResult);
+            Assert.AreEqual(2, board.BlackGipfPiecesInPlay);
+            Assert.AreEqual(2, board.WhiteGipfPiecesInPlay);
         }
 
         [TestMethod]
@@ -141,11 +141,11 @@ namespace GipfLib.Tests
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-d5")));   //w
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-e5")));   //b
 
-            Assert.AreEqual(10, board.reserveBlackPieces);
-            Assert.AreEqual(10, board.reserveWhitePieces);
-            Assert.AreEqual(GameResult.Incomplete, board.gameResult);
-            Assert.AreEqual(2, board.blackGipfPiecesInPlay);
-            Assert.AreEqual(2, board.whiteGipfPiecesInPlay);
+            Assert.AreEqual(10, board.ReserveBlackPieces);
+            Assert.AreEqual(10, board.ReserveWhitePieces);
+            Assert.AreEqual(GameResult.Incomplete, board.GameResult);
+            Assert.AreEqual(2, board.BlackGipfPiecesInPlay);
+            Assert.AreEqual(2, board.WhiteGipfPiecesInPlay);
 
             Assert.AreEqual(8, board.AllPossibleRemoveLists.Count);
         }
@@ -282,6 +282,30 @@ namespace GipfLib.Tests
             }
 
             Assert.AreEqual(2, boards.Count);
+        }
+
+        [TestMethod]
+        public void CellRunRemoveLists()
+        {
+            Board board = Board.GetInitialBoard();
+            Cell[] cells =
+            {
+                board.Cells[NotationParser.GetHex("b2")],
+                board.Cells[NotationParser.GetHex("c3")],
+                board.Cells[NotationParser.GetHex("d4")],
+                board.Cells[NotationParser.GetHex("e5")],
+                board.Cells[NotationParser.GetHex("f5")],
+            };
+            Cell cell = board.Cells[NotationParser.GetHex("a1")];
+            cell.Push(Position.topright, Pieces.White);
+            cell.Push(Position.topright, Pieces.BlackGipf);
+            cell.Push(Position.topright, Pieces.BlackGipf);
+            cell.Push(Position.topright, Pieces.Black);
+            cell.Push(Position.topright, Pieces.Black);
+
+            CellRun run = new CellRun(cells);
+            var removalLists = run.GetRemoveLists();
+            Assert.AreEqual(4, removalLists.Count());
         }
     }
 }
