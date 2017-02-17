@@ -67,6 +67,9 @@ namespace GipfLib.Models
         public IReadOnlyList<CellRun> ExtendedRunsOfFour 
         { get { if (_runsDirty) FindRuns(); return _runsVisitor.ExtendedRuns; } }
 
+        public IReadOnlyList<Cell> RunIntersections 
+        { get { if (_runsDirty) FindRuns(); return _runsVisitor.Intersections; } }
+
         public string LastError => _lastError;
         private string _lastError;
 
@@ -97,32 +100,26 @@ namespace GipfLib.Models
                 // TODO does this check apply to all cases where we run this function?
                 // if the run of four is all gipf, do not throw an exception
                 if (extRun.Color != ColorToPlay && !extRun.AllGipf) throw new Exception("Prior to moving, there is a run of four that is not of the color whose turn it is");
-                foreach (Cell c in extRun.Run)
+
+                // skip this run if it is the opponent's all Gipf leftover
+                if (extRun.Color != ColorToPlay && extRun.AllGipf) continue;
+
+                IEnumerable<RemoveMovePart> removeParts = extRun.GetRemoveLists();
+                foreach (RemoveMovePart removeMovePart in removeParts)
                 {
-                    // Gipf piece causes multiplication of moves due to choice
-                    if (c.Piece.NumPieces == 2)
+                    IList<Hex> intersectionsConcerned =
+                        removeMovePart.HexesToRemove.Intersect(_runsVisitor.Intersections.Select(c => c.hex)).ToList();
+                    if (intersectionsConcerned.Count == 0)
                     {
-                        removeBeforeGipf.Add(c.hex);
+                        
                     }
                     else
                     {
-                        removeBefore.Add(c.hex);
+
                     }
                 }
             }
 
-            _allPossibleRemoveLists.Add(new RemoveMovePart(removeBefore));
-            foreach (Hex hex in removeBeforeGipf)
-            {
-                List<List<Hex>> tempListList = new List<List<Hex>>();
-                foreach (RemoveMovePart removePart in _allPossibleRemoveLists)
-                {
-                    List<Hex> tempList = new List<Hex>(removePart.HexesToRemove);
-                    tempList.Add(hex);
-                    tempListList.Add(tempList);
-                }
-                foreach (List<Hex> tempList in tempListList) _allPossibleRemoveLists.Add(new RemoveMovePart(tempList));
-            }
         }
 
         public IReadOnlyList<Move> GetMoves()

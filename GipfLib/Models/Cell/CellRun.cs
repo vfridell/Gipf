@@ -44,5 +44,21 @@ namespace GipfLib.Models
             }
             return returnList;
         }
+
+        public IEnumerable<RemoveMovePart> GetRemoveLists(Board board, RemoveMovePart priorRemoval)
+        {
+            IEnumerable<Hex> priorIntersections = board.RunIntersections.Select(c => c.hex).Intersect(priorRemoval.HexesToRemove);
+            // ReSharper disable PossibleMultipleEnumeration
+            if (priorIntersections.Any())
+            {
+                // two runs will only ever share a single intersection
+                return GetRemoveLists().Where(rmp => rmp.ContiguousAfterRemoval(priorIntersections.First()));
+            }
+            else
+            {
+                return GetRemoveLists();
+            }
+
+        }
     }
 }

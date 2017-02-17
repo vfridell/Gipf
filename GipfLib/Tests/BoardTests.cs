@@ -14,7 +14,7 @@ namespace GipfLib.Tests
         {
             Board board = Board.GetInitialBoard();
             IEnumerable<KeyValuePair<Hex, Cell>> shouldOnlyBeWalls = board.Cells.Where(kvp => kvp.Value.NeighborhoodCells.Count != 6);
-            Assert.AreEqual(24, shouldOnlyBeWalls.Select(kvp => kvp.Value).Where(cell => cell is Wall).Count());
+            Assert.AreEqual(24, shouldOnlyBeWalls.Select(kvp => kvp.Value).Count(cell => cell is Wall));
         }
 
         [TestMethod]
@@ -175,7 +175,7 @@ namespace GipfLib.Tests
             Board board = Board.GetInitialBoard(GameType.Tournament);
             Assert.AreNotEqual(board.GetMoves()[0], board.GetMoves()[1]);
             Assert.AreEqual(18, board.GetMoves().Count);
-            Assert.AreEqual(0, board.GetMoves().Where(m => m.isGipf == false).Count());
+            Assert.AreEqual(0, board.GetMoves().Count(m => m.isGipf == false));
         }
 
         [TestMethod]
@@ -184,7 +184,7 @@ namespace GipfLib.Tests
             Board board = Board.GetInitialBoard(GameType.Standard);
             Assert.AreNotEqual(board.GetMoves()[0], board.GetMoves()[1]);
             Assert.AreEqual(30, board.GetMoves().Count);
-            Assert.AreEqual(30, board.GetMoves().Where(m => m.isGipf == false).Count());
+            Assert.AreEqual(30, board.GetMoves().Count(m => m.isGipf == false));
         }
 
         [TestMethod]
@@ -199,7 +199,7 @@ namespace GipfLib.Tests
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"Gf1-f3")));  //b
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-c3")));   //w
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f1-f4")));   //b
-            Assert.AreEqual(0, board.GetMoves().Where(m => m.isGipf == true).Count());
+            Assert.AreEqual(0, board.GetMoves().Count(m => m.isGipf));
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a1-d4")));   //w
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"a5-c5")));   //b
             Assert.IsTrue(board.TryMakeMove(Move.GetMove(@"f1-f5")));   //w
